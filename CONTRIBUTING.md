@@ -1,10 +1,8 @@
-✍️ Content for CONTRIBUTING.md
-
 # 🤝 Contributing to OpenFlightPlan
 
-First off, thanks for taking the time to contribute!
+First off, thanks for taking the time to contribute, everything helps!
 
-We welcome:
+I welcome:
 
 - 🐛 Bug Reports
 - ✨ Feature Requests
@@ -27,7 +25,7 @@ We welcome:
 
     Open a Pull Request against the main branch.
 
-We review PRs regularly and will respond as quickly as possible.
+I review PRs regularly and will respond as quickly as possible.
 🧹 Code Style
 
     Follow existing formatting conventions.
@@ -62,23 +60,7 @@ If you have ideas to improve OpenFlightPlan:
 
 Thanks again for helping make OpenFlightPlan better! 🚀
 
-— The OpenFlightPlan Team
+— OpenFlightMike!
 
 
 ---
-
-# 📋 Summary of what this block covers:
-- Encourages PRs, bugs, features.
-- Gives exact steps for Git workflow.
-- Professional tone.
-- Auto-links to your GitHub Issues page (with `/new/choose` link — it will bring them straight to the issue templates if you create those too).
-
----
-
-# ✍️ How to Create & Push It
-
-If you're SSHed into your server:
-
-```bash
-cd /var/www/mobile-flight-planner
-nano CONTRIBUTING.md
