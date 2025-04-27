@@ -1,27 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
-         <loc>https://mostrager.github.io/mobile-flight-planner/</loc>
-         <lastmod>2025-04-23</lastmod>
+         <loc>https://docs.openflightplan.io/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://mostrager.github.io/mobile-flight-planner/developer-guide/</loc>
-         <lastmod>2025-04-23</lastmod>
+         <loc>https://docs.openflightplan.io/developer-guide/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://mostrager.github.io/mobile-flight-planner/getting-started/</loc>
-         <lastmod>2025-04-23</lastmod>
+         <loc>https://docs.openflightplan.io/getting-started/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://mostrager.github.io/mobile-flight-planner/license/</loc>
-         <lastmod>2025-04-23</lastmod>
+         <loc>https://docs.openflightplan.io/license/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://mostrager.github.io/mobile-flight-planner/mobile/</loc>
-         <lastmod>2025-04-23</lastmod>
+         <loc>https://docs.openflightplan.io/mobile/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://mostrager.github.io/mobile-flight-planner/using-the-app/</loc>
-         <lastmod>2025-04-23</lastmod>
+         <loc>https://docs.openflightplan.io/using-the-app/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
     </url>
 </urlset>

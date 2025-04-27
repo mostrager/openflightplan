@@ -1,20 +1,24 @@
 site_name: OpenFlightPlan Docs
-site_url: https://mostrager.github.io/mobile-flight-planner/
+site_url: https://docs.openflightplan.io/
 repo_url: https://github.com/mostrager/mobile-flight-planner
 repo_name: GitHub
 theme:
   name: material
   palette:
     - scheme: default
-      primary: blue
+      primary: indigo
       accent: light blue
+    - scheme: slate
+      primary: teal
+      accent: cyan
   font:
-    text: Roboto
-    code: Roboto Mono
-nav:
-  - Home: index.md
-  - Getting Started: getting-started.md
-  - Using the App: using-the-app.md
-  - Mobile Access: mobile.md
-  - Developer Guide: developer-guide.md
-  - License: license.md
+    text: "Open Sans"
+    code: "Fira Code"
+  logo: assets/logo.png
+  favicon: assets/favicon.ico
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/mostrager/mobile-flight-planner
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/michaelostrager

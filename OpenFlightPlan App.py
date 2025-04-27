@@ -36,27 +36,23 @@ def mph_to_mps(mph):
 
 def main():
     # Header bar layout
-    col_logo, col_title = st.columns([1, 6])
+    col_logo, col_title, col_docs = st.columns([1,5, 1])
 
     with col_logo:
         st.image("generated-icon.png", width=60)
 
     with col_title:
         st.markdown("""
-        <style>
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .header-animated {
-            animation: fadeIn 1s ease-out;
-            padding-top: 12px;
-        }
-        </style>
-
         <div class='header-animated'>
             <h2 style='margin-bottom: 0;'>OpenFlightPlan</h2>
             <p style='color: gray; margin-top: 0;'>Mobile-first mission planning</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with col_docs:
+        st.markdown("""
+        <div style='text-align: right; padding-top: 12px;'>
+            <a href='https://docs.openflightplan.io' target='_blank' style='text-decoration: none; font-weight: bold; font-size: 16px;'>📚 Docs</a>
         </div>
         """, unsafe_allow_html=True)
 
