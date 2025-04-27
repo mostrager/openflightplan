@@ -1,5 +1,5 @@
 site_name: OpenFlightPlan Docs
-site_url: https://docs.openflightplan.io/
+site_url: https://docs.openflightplan.io
 repo_url: https://github.com/mostrager/mobile-flight-planner
 repo_name: GitHub
 theme:
