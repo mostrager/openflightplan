@@ -36,7 +36,7 @@ def mph_to_mps(mph):
 
 def create_map():
     base_map = folium.Map(
-        location=[40.7128, -74.0060],  # Default center
+        location=[40.7128, -74.0060],
         zoom_start=12,
         control_scale=True,
         tiles="CartoDB positron"
@@ -58,7 +58,6 @@ def create_map():
     draw.add_to(base_map)
 
     Geocoder(collapsed=False, add_marker=True).add_to(base_map)
-
     return base_map
 
 def main():
@@ -68,17 +67,32 @@ def main():
             animation: fadeInAnimation ease 1.5s;
             animation-iteration-count: 1;
             animation-fill-mode: forwards;
+            background-color: #f9fafb;
         }
         @keyframes fadeInAnimation {
             0% { opacity: 0; transform: translateY(10px); }
             100% { opacity: 1; transform: translateY(0); }
         }
-        .stButton>button { margin-top: 10px; }
+        h1, h2, h3, h4 {
+            color: #3f51b5;
+        }
+        .stButton>button {
+            background-color: #3f51b5;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 16px;
+        }
+        .stButton>button:hover {
+            background-color: #3949ab;
+            transition: background-color 0.3s;
+        }
+        .stSlider>div>div>div>div {
+            background: #3f51b5;
+        }
         </style>
     """, unsafe_allow_html=True)
 
-    # Header
-    col_logo, col_title, col_docs = st.columns([1, 6, 1])
+    col_logo, col_title, col_docs = st.columns([1,6,1])
 
     with col_logo:
         st.image("generated-icon.png", width=60)
@@ -92,16 +106,16 @@ def main():
         """, unsafe_allow_html=True)
 
     with col_docs:
-        st.markdown("[📚 Docs](https://docs.openflightplan.io)", unsafe_allow_html=True)
+        st.markdown("[\ud83d\udcda Docs](https://docs.openflightplan.io)", unsafe_allow_html=True)
 
-    st.title("🛩️ Flight Planner for Orthomosaic and 3D Model Creation")
+    st.title("\ud83d\udea9 Flight Planner for Orthomosaic and 3D Model Creation")
 
     if 'flight_paths' not in st.session_state:
         st.session_state.flight_paths = {'north_south': None, 'east_west': None}
     if 'area_bounds' not in st.session_state:
         st.session_state.area_bounds = None
 
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([2,1])
 
     with col1:
         with st.spinner('Loading Map...'):
@@ -110,7 +124,7 @@ def main():
                 if map_instance:
                     map_data = st_folium(map_instance, width=900, height=600)
 
-                    if st.button("🗑️ Clear Drawn Area"):
+                    if st.button("\ud83d\uddd1\ufe0f Clear Drawn Area"):
                         st.session_state.area_bounds = None
                         st.experimental_rerun()
 
@@ -122,25 +136,19 @@ def main():
 
                             if st.session_state.area_bounds:
                                 logger.info(f"Calculated area bounds: {st.session_state.area_bounds}")
-                                st.success(
-                                    f"✅ AOI Captured - Center: ({st.session_state.area_bounds['center_lat']:.6f}, "
-                                    f"{st.session_state.area_bounds['center_lon']:.6f})\n"
-                                    f"Area: {st.session_state.area_bounds['width']:.1f}m × "
-                                    f"{st.session_state.area_bounds['height']:.1f}m"
-                                )
+                                st.success(f"\u2705 AOI Captured - Center: ({st.session_state.area_bounds['center_lat']:.6f}, {st.session_state.area_bounds['center_lon']:.6f})")
                             else:
-                                st.error("❌ Could not calculate area bounds. Please try drawing the area again.")
+                                st.error("\u274c Could not calculate area bounds. Please try again.")
                         else:
-                            st.warning("Please draw an area of interest on the map.")
+                            st.warning("Draw an area of interest on the map.")
                 else:
-                    st.error("Failed to create map. Please refresh the page and try again.")
+                    st.error("Failed to create map. Please refresh the page.")
             except Exception as e:
                 logger.error(f"Error handling map: {str(e)}")
-                st.error(f"Error handling map: {str(e)}. Please try refreshing the page.")
+                st.error(f"Error: {str(e)}")
 
     with col2:
-        st.subheader("⚙️ Flight Parameters")
-
+        st.subheader("\u2699\ufe0f Flight Parameters")
         altitude_unit = st.selectbox("Altitude Unit", ["meters", "feet"], key="altitude_unit")
         altitude = st.number_input("Altitude", min_value=1, value=50) if altitude_unit == "meters" else feet_to_meters(
             st.number_input("Altitude (ft)", min_value=3, value=164))
@@ -152,18 +160,14 @@ def main():
         overlap = st.slider("Front Overlap (%)", min_value=0.0, max_value=1.0, value=0.8)
         sidelap = st.slider("Side Overlap (%)", min_value=0.0, max_value=1.0, value=0.7)
         interval = st.number_input("Camera Interval (s)", min_value=1, value=2)
-        fov = st.number_input("Camera Field of View (°)", min_value=10, value=85)
+        fov = st.number_input("Camera Field of View (\u00b0)", min_value=10, value=85)
 
         waypoint_action = st.selectbox(
-            "Waypoint Action",
-            ["Take Picture", "Start Recording", "Stop Recording"],
-            help="Action to perform at each waypoint"
+            "Waypoint Action", ["Take Picture", "Start Recording", "Stop Recording"], help="Action at each waypoint"
         )
 
         direction = st.radio(
-            "Flight Path Direction",
-            ('north_south', 'east_west'),
-            format_func=lambda x: "North-South" if x == 'north_south' else "East-West"
+            "Flight Path Direction", ('north_south', 'east_west'), format_func=lambda x: "North-South" if x == 'north_south' else "East-West"
         )
 
         if st.button(f"Generate {direction.replace('_', '-')} Flight Plan"):
@@ -183,16 +187,16 @@ def main():
                         direction=direction
                     )
                     st.session_state.flight_paths[direction] = path
-                    logger.info(f"Generated {direction} flight path with {len(path)} waypoints")
-                    st.success(f"✅ {direction.replace('_', '-')} flight plan generated successfully!")
+                    logger.info(f"Generated {direction} flight path")
+                    st.success(f"\u2705 {direction.replace('_', '-')} flight plan generated!")
                 except Exception as e:
-                    logger.error(f"Error generating flight path: {str(e)}")
-                    st.error(f"❌ Error generating flight plan: {str(e)}")
+                    logger.error(f"Error: {str(e)}")
+                    st.error(f"Error: {str(e)}")
             else:
-                st.warning("Please draw an area of interest on the map first.")
+                st.warning("Please draw an AOI first!")
 
     if any(path is not None for path in st.session_state.flight_paths.values()):
-        st.subheader("🧭 Generated Flight Plans")
+        st.subheader("\ud83e\uddfd Generated Flight Plans")
         try:
             flight_map = folium.Map(
                 location=[
@@ -206,22 +210,8 @@ def main():
             colors = {'north_south': 'blue', 'east_west': 'red'}
             for direction, path in st.session_state.flight_paths.items():
                 if path:
-                    points = []
-                    for i, coord in enumerate(path):
-                        points.append([coord[1], coord[0]])
-                        folium.Marker(
-                            location=[coord[1], coord[0]],
-                            popup=f"{direction} Waypoint {i+1}",
-                            icon=folium.Icon(color=colors[direction])
-                        ).add_to(flight_map)
-
-                    folium.PolyLine(
-                        points,
-                        weight=2,
-                        color=colors[direction],
-                        opacity=0.8,
-                        popup=f"{direction.replace('_', '-')} Path"
-                    ).add_to(flight_map)
+                    points = [[coord[1], coord[0]] for coord in path]
+                    folium.PolyLine(points, weight=2, color=colors[direction], opacity=0.8).add_to(flight_map)
 
             st_folium(flight_map, width=900, height=600)
 
@@ -229,7 +219,7 @@ def main():
                 if path:
                     df_flight_plan = pd.DataFrame(path, columns=["Longitude", "Latitude"])
                     st.download_button(
-                        label=f"📥 Download {direction.replace('_', '-')} Flight Plan (CSV)",
+                        label=f"\ud83d\udcc5 Download {direction.replace('_', '-')} Flight Plan (CSV)",
                         data=df_flight_plan.to_csv(index=False),
                         file_name=f"flight_plan_{direction}.csv",
                         mime="text/csv"
@@ -237,19 +227,17 @@ def main():
 
                     params = {'altitude': altitude, 'speed': speed}
                     kmz_file = create_kml_file(path, params)
-
                     with open(kmz_file, 'rb') as f:
                         st.download_button(
-                            label=f"📥 Download {direction.replace('_', '-')} Flight Plan (KMZ)",
+                            label=f"\ud83d\udcc5 Download {direction.replace('_', '-')} Flight Plan (KMZ)",
                             data=f,
                             file_name=kmz_file,
                             mime="application/vnd.google-earth.kmz"
                         )
                     os.remove(kmz_file)
-
         except Exception as e:
             logger.error(f"Error displaying flight plan: {str(e)}")
-            st.error(f"❌ Error displaying flight plan: {str(e)}")
+            st.error(f"Error displaying flight plan: {str(e)}")
 
     st.markdown("""
     ---
