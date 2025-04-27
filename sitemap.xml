@@ -6,6 +6,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://docs.openflightplan.io/CONTRIBUTING/</loc>
+         <lastmod>2025-04-27</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://docs.openflightplan.io/developer-guide/</loc>
          <lastmod>2025-04-27</lastmod>
          <changefreq>daily</changefreq>

@@ -11,7 +11,7 @@
         <link rel="canonical" href="https://docs.openflightplan.io/developer-guide/">
       
       
-        <link rel="prev" href="..">
+        <link rel="prev" href="../CONTRIBUTING/">
       
       
         <link rel="next" href="../getting-started/">
@@ -22,7 +22,7 @@
     
     
       
-        <title>Developer guide - OpenFlightPlan Docs</title>
+        <title>👨‍💻 Developer Guide - OpenFlightPlan Docs</title>
       
     
     
@@ -112,7 +112,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Developer guide
+              👨‍💻 Developer Guide
             
           </span>
         </div>
@@ -246,7 +246,26 @@
         
   
   <span class="md-ellipsis">
-    🛩️ OpenFlightPlan Docs
+    🛩️ OpenFlightPlan
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CONTRIBUTING/" class="md-nav__link">
+        
+  
+  <span class="md-ellipsis">
+    🤝 Contributing to OpenFlightPlan
   </span>
   
 
@@ -267,12 +286,14 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
   
   <span class="md-ellipsis">
-    Developer guide
+    👨‍💻 Developer Guide
   </span>
   
 
@@ -283,7 +304,7 @@
         
   
   <span class="md-ellipsis">
-    Developer guide
+    👨‍💻 Developer Guide
   </span>
   
 
@@ -295,6 +316,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -303,8 +326,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#developer-guide" class="md-nav__link">
-    👨‍💻 Developer GuidE
+  <a href="#tech-stack" class="md-nav__link">
+    🧱 Tech Stack
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-setup" class="md-nav__link">
+    🚀 Local Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    🤝 Contributing
   </a>
   
 </li>
@@ -327,7 +364,7 @@
         
   
   <span class="md-ellipsis">
-    Getting started
+    🚀 Getting Started
   </span>
   
 
@@ -410,6 +447,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -418,8 +457,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#developer-guide" class="md-nav__link">
-    👨‍💻 Developer GuidE
+  <a href="#tech-stack" class="md-nav__link">
+    🧱 Tech Stack
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#local-setup" class="md-nav__link">
+    🚀 Local Setup
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contributing" class="md-nav__link">
+    🤝 Contributing
   </a>
   
 </li>
@@ -442,9 +495,30 @@
   
 
 
-  <h1>Developer guide</h1>
-
-<h2 id="developer-guide">👨‍💻 Developer GuidE</h2>
+<h1 id="developer-guide">👨‍💻 Developer Guide</h1>
+<p>Want to self-host or contribute? Here's how.</p>
+<hr />
+<h2 id="tech-stack">🧱 Tech Stack</h2>
+<ul>
+<li><strong>Frontend</strong>: Streamlit + Folium</li>
+<li><strong>Backend</strong>: Python</li>
+<li><strong>Exports</strong>: simplekml (KMZ) + pandas (CSV)</li>
+</ul>
+<hr />
+<h2 id="local-setup">🚀 Local Setup</h2>
+<p>```bash
+git clone https://github.com/mostrager/mobile-flight-planner.git
+cd mobile-flight-planner
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+streamlit run OpenFlightPlan\ App.py</p>
+<h2 id="contributing">🤝 Contributing</h2>
+<ul>
+<li>Fork the repo</li>
+<li>Submit pull requests</li>
+<li>Open feature requests <a href="https://github.com/mostrager/mobile-flight-planner/issues">here</a></li>
+</ul>
 
 
 
