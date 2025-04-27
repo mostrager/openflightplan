@@ -62,35 +62,54 @@ def create_map():
 
 def main():
     st.markdown("""
-        <style>
-        body {
-            animation: fadeInAnimation ease 1.5s;
-            animation-iteration-count: 1;
-            animation-fill-mode: forwards;
-            background-color: #f9fafb;
-        }
-        @keyframes fadeInAnimation {
-            0% { opacity: 0; transform: translateY(10px); }
-            100% { opacity: 1; transform: translateY(0); }
-        }
-        h1, h2, h3, h4 {
-            color: #3f51b5;
-        }
-        .stButton>button {
-            background-color: #3f51b5;
-            color: white;
-            border-radius: 8px;
-            padding: 8px 16px;
-        }
-        .stButton>button:hover {
-            background-color: #3949ab;
-            transition: background-color 0.3s;
-        }
-        .stSlider>div>div>div>div {
-            background: #3f51b5;
-        }
-        </style>
-    """, unsafe_allow_html=True)
+    <style>
+    /* Fade-in Animation */
+    body {
+        animation: fadeInAnimation ease 1.5s;
+        animation-iteration-count: 1;
+        animation-fill-mode: forwards;
+        background-color: #f9fbfd;
+    }
+    @keyframes fadeInAnimation {
+        0% { opacity: 0; transform: translateY(10px); }
+        100% { opacity: 1; transform: translateY(0); }
+    }
+
+    /* General Button Styling */
+    .stButton>button {
+        background-color: #3B5BDB; /* Ultramarine Blue */
+        color: white;
+        border: none;
+        padding: 0.5em 1em;
+        border-radius: 8px;
+        transition: background-color 0.3s ease;
+        margin-top: 10px;
+    }
+    .stButton>button:hover {
+        background-color: #1c3faa;
+        color: #ffffff;
+    }
+
+    /* Title and Header Customization */
+    .stTitle {
+        color: #1c3faa;
+    }
+    h2 {
+        color: #1c3faa;
+    }
+
+    /* Subheader customization */
+    .stSubheader {
+        color: #444444;
+    }
+
+    /* Adjust sidebar and background */
+    .block-container {
+        padding-top: 2rem;
+        padding-bottom: 2rem;
+    }
+    </style>
+""", unsafe_allow_html=True)
 
     col_logo, col_title, col_docs = st.columns([1,6,1])
 
