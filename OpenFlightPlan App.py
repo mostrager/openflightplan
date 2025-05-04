@@ -22,13 +22,18 @@ from dji_export import create_kml_file
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Utility functions
-def meters_to_feet(meters): return meters * 3.28084
-def feet_to_meters(feet): return feet / 3.28084
-def mps_to_mph(mps): return mps * 2.23694
-def mph_to_mps(mph): return mph / 2.23694
+def meters_to_feet(meters):
+    return meters * 3.28084
 
-# New styled create_map
+def feet_to_meters(feet):
+    return feet / 3.28084
+
+def mps_to_mph(mps):
+    return mps * 2.23694
+
+def mph_to_mps(mph):
+    return mph / 2.23694
+
 def create_map():
     base_map = folium.Map(
         location=[40.7128, -74.0060],
@@ -50,76 +55,76 @@ def create_map():
         edit_options={'edit': True}
     )
     draw.add_to(base_map)
+
     Geocoder(collapsed=False, add_marker=True).add_to(base_map)
+
     return base_map
 
-# Main app
 def main():
-    # --- Inject UI Styling ---
+    st.set_page_config(page_title="OpenFlightPlan", page_icon="🛩️", layout="wide")
+
     st.markdown("""
-    <style>
-    body {
-        background-color: #f9fbfd;
-        animation: fadeInAnimation ease 1.5s;
-        animation-fill-mode: forwards;
-    }
-    @keyframes fadeInAnimation {
-        0% { opacity: 0; transform: translateY(10px); }
-        100% { opacity: 1; transform: translateY(0); }
-    }
-    .stButton>button {
-        background-color: #3B5BDB;
-        color: white;
-        border: none;
-        padding: 0.5em 1em;
-        border-radius: 8px;
-        font-weight: 600;
-        transition: background-color 0.3s ease;
-        margin-top: 10px;
-    }
-    .stButton>button:hover {
-        background-color: #1c3faa;
-    }
-    .stTitle h1, h2 {
-        color: #1c3faa;
-    }
-    .stSubheader h3 {
-        color: #444444;
-    }
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    </style>
+        <style>
+        body {
+            animation: fadeInAnimation ease 1s;
+            animation-iteration-count: 1;
+            animation-fill-mode: forwards;
+        }
+        @keyframes fadeInAnimation {
+            0% { opacity: 0; transform: translateY(10px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 0 10px 0;
+            border-bottom: 2px solid #5B2C6F;
+        }
+        .header-title {
+            font-size: 2em;
+            font-weight: bold;
+            color: #5B2C6F;
+        }
+        .header-subtitle {
+            color: #7D3C98;
+            font-size: 1em;
+        }
+        .stButton>button {
+            background-color: #5B2C6F;
+            color: white;
+            border-radius: 5px;
+            border: none;
+            padding: 0.5em 1em;
+            font-weight: bold;
+        }
+        .stButton>button:hover {
+            background-color: #7D3C98;
+        }
+        </style>
     """, unsafe_allow_html=True)
 
-    # --- Header Layout ---
-    col_logo, col_title, col_docs = st.columns([1, 6, 1])
-
-    with col_logo:
-        st.image("generated-icon.png", width=60)
-
-    with col_title:
-        st.markdown("""
-        <div class='header-animated'>
-            <h2 style='margin-bottom: 0;'>OpenFlightPlan</h2>
-            <p style='color: gray; margin-top: 0;'>Mobile-first mission planning</p>
+    st.markdown(
+        """
+        <div class="header">
+            <div>
+                <div class="header-title">🛩️ OpenFlightPlan</div>
+                <div class="header-subtitle">Mobile-first mission planning</div>
+            </div>
+            <div>
+                <a href="https://docs.openflightplan.io" target="_blank">
+                    <button style="background-color:#5B2C6F;color:white;padding:8px 16px;border:none;border-radius:5px;">📚 Docs</button>
+                </a>
+            </div>
         </div>
-        """, unsafe_allow_html=True)
+        """, unsafe_allow_html=True
+    )
 
-    with col_docs:
-        st.markdown("[📚 Docs](https://docs.openflightplan.io)", unsafe_allow_html=True)
-
-    # --- Main Title ---
-    st.title("🛩️ Flight Planner for Orthomosaic and 3D Model Creation")
-
-    # --- Session State Setup ---
     if 'flight_paths' not in st.session_state:
         st.session_state.flight_paths = {'north_south': None, 'east_west': None}
     if 'area_bounds' not in st.session_state:
         st.session_state.area_bounds = None
 
-    # --- Two Column Layout ---
     col1, col2 = st.columns([2, 1])
 
     with col1:
@@ -140,21 +145,20 @@ def main():
                             st.session_state.area_bounds = calculate_area_bounds(geometry['geometry'])
 
                             if st.session_state.area_bounds:
+                                logger.info(f"Calculated area bounds: {st.session_state.area_bounds}")
                                 st.success(
                                     f"✅ AOI Captured - Center: ({st.session_state.area_bounds['center_lat']:.6f}, "
                                     f"{st.session_state.area_bounds['center_lon']:.6f})\n"
                                     f"Area: {st.session_state.area_bounds['width']:.1f}m × "
                                     f"{st.session_state.area_bounds['height']:.1f}m"
                                 )
-                            else:
-                                st.error("❌ Could not calculate area bounds. Please try drawing again.")
                         else:
-                            st.warning("Draw an area of interest on the map.")
+                            st.warning("Please draw an area of interest on the map.")
                 else:
-                    st.error("Failed to create map. Please refresh the page.")
+                    st.error("Failed to create map. Please refresh.")
             except Exception as e:
-                logger.error(f"Error handling map: {str(e)}")
-                st.error(f"❌ Map error: {str(e)}. Please refresh.")
+                logger.error(f"Error loading map: {str(e)}")
+                st.error(f"Error loading map: {str(e)}")
 
     with col2:
         st.subheader("⚙️ Flight Parameters")
@@ -167,15 +171,15 @@ def main():
         speed = st.number_input("Speed", min_value=1, value=5) if speed_unit == "m/s" else mph_to_mps(
             st.number_input("Speed (mph)", min_value=2, value=11))
 
-        overlap = st.slider("Front Overlap (%)", min_value=0.0, max_value=1.0, value=0.8)
-        sidelap = st.slider("Side Overlap (%)", min_value=0.0, max_value=1.0, value=0.7)
+        overlap = st.slider("Front Overlap (%)", 0.0, 1.0, 0.8)
+        sidelap = st.slider("Side Overlap (%)", 0.0, 1.0, 0.7)
         interval = st.number_input("Camera Interval (s)", min_value=1, value=2)
         fov = st.number_input("Camera Field of View (°)", min_value=10, value=85)
 
         waypoint_action = st.selectbox(
             "Waypoint Action",
             ["Take Picture", "Start Recording", "Stop Recording"],
-            help="Action to perform at each waypoint"
+            help="Action performed at each waypoint"
         )
 
         direction = st.radio(
@@ -184,7 +188,7 @@ def main():
             format_func=lambda x: "North-South" if x == 'north_south' else "East-West"
         )
 
-        if st.button(f"Generate {direction.replace('_', '-')} Flight Plan"):
+        if st.button(f"🚀 Generate {direction.replace('_', '-')} Flight Plan"):
             if st.session_state.area_bounds:
                 try:
                     path = generate_grid_path(
@@ -201,77 +205,18 @@ def main():
                         direction=direction
                     )
                     st.session_state.flight_paths[direction] = path
+                    logger.info(f"Generated {direction} flight path with {len(path)} waypoints")
                     st.success(f"✅ {direction.replace('_', '-')} flight plan generated successfully!")
                 except Exception as e:
                     logger.error(f"Error generating flight path: {str(e)}")
-                    st.error(f"❌ Flight plan generation error: {str(e)}")
+                    st.error(f"❌ Error generating flight plan: {str(e)}")
             else:
-                st.warning("Please draw an area first.")
-
-    if any(path is not None for path in st.session_state.flight_paths.values()):
-        st.subheader("🧭 Generated Flight Plans")
-        try:
-            flight_map = folium.Map(
-                location=[
-                    st.session_state.area_bounds['center_lat'],
-                    st.session_state.area_bounds['center_lon']
-                ],
-                zoom_start=15,
-                tiles="CartoDB positron"
-            )
-
-            colors = {'north_south': 'blue', 'east_west': 'red'}
-            for direction, path in st.session_state.flight_paths.items():
-                if path:
-                    points = []
-                    for i, coord in enumerate(path):
-                        points.append([coord[1], coord[0]])
-                        folium.Marker(
-                            location=[coord[1], coord[0]],
-                            popup=f"{direction} Waypoint {i+1}",
-                            icon=folium.Icon(color=colors[direction])
-                        ).add_to(flight_map)
-
-                    folium.PolyLine(
-                        points,
-                        weight=2,
-                        color=colors[direction],
-                        opacity=0.8,
-                        popup=f"{direction.replace('_', '-')} Path"
-                    ).add_to(flight_map)
-
-            st_folium(flight_map, width=900, height=600)
-
-            for direction, path in st.session_state.flight_paths.items():
-                if path:
-                    df_flight_plan = pd.DataFrame(path, columns=["Longitude", "Latitude"])
-                    st.download_button(
-                        label=f"📥 Download {direction.replace('_', '-')} Flight Plan (CSV)",
-                        data=df_flight_plan.to_csv(index=False),
-                        file_name=f"flight_plan_{direction}.csv",
-                        mime="text/csv"
-                    )
-
-                    params = {'altitude': altitude, 'speed': speed}
-                    kmz_file = create_kml_file(path, params)
-
-                    with open(kmz_file, 'rb') as f:
-                        st.download_button(
-                            label=f"📥 Download {direction.replace('_', '-')} Flight Plan (KMZ)",
-                            data=f,
-                            file_name=kmz_file,
-                            mime="application/vnd.google-earth.kmz"
-                        )
-                    os.remove(kmz_file)
-
-        except Exception as e:
-            logger.error(f"Error displaying flight plan: {str(e)}")
-            st.error(f"❌ Error displaying flight plan: {str(e)}")
+                st.warning("Please draw an Area of Interest first.")
 
     st.markdown("""
     ---
     <div style='text-align: center'>
-    Created by <a href='https://www.linkedin.com/in/michaelostrager' target='_blank'>Michael Ostrager</a><br>
+    Created by <a href='https://www.linkedin.com/in/michaelostrager' target='_blank'>Michael Ostrager</a>  
     © 2025 • <a href='https://openflightplan.io' target='_blank'>openflightplan.io</a>
     </div>
     """, unsafe_allow_html=True)
