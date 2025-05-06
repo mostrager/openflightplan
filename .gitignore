@@ -1,1 +1,23 @@
+# Python cache and artifacts
+__pycache__/
+*.py[cod]
+*.pyt=  # accidental or malformed files
+
+# Virtual environments
 venv/
+.env/
+
+# Logs and runtime output
+nohup.out
+*.log
+
+# MkDocs static site build
+site/
+
+# Node.js
+node_modules/
+package-lock.json
+
+# OS and IDE junk
+.DS_Store
+Thumbs.db
