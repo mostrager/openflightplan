@@ -188,6 +188,16 @@ def main():
             format_func=lambda x: "North-South" if x == 'north_south' else "East-West"
         )
 
+        rotation_deg = st.slider(
+            "Grid Rotation (°)",
+            min_value=-90,
+            max_value=90,
+            value=0,
+            step=1,
+            help="Rotate the grid to align with your AOI (e.g., a field row direction)"
+        )
+
+
         if st.button(f"🚀 Generate {direction.replace('_', '-')} Flight Plan"):
             if st.session_state.area_bounds:
                 try:
@@ -203,6 +213,7 @@ def main():
                         center_lat=st.session_state.area_bounds['center_lat'],
                         center_lon=st.session_state.area_bounds['center_lon'],
                         direction=direction
+                        rotation_deg=rotation_deg
                     )
                     st.session_state.flight_paths[direction] = path
                     logger.info(f"Generated {direction} flight path with {len(path)} waypoints")
