@@ -212,7 +212,7 @@ def main():
                         fov=fov,
                         center_lat=st.session_state.area_bounds['center_lat'],
                         center_lon=st.session_state.area_bounds['center_lon'],
-                        direction=direction
+                        direction=direction,
                         rotation_deg=rotation_deg
                     )
                     st.session_state.flight_paths[direction] = path
