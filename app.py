@@ -15,8 +15,9 @@ from dji_export import create_export_zip
 import streamlit.components.v1 as components
 import time, os
 import hashlib, uuid
+import json
 
-st.set_page_config(page_title="openflightplan.io", layout="wide")
+st.set_page_config(page_title="openflightplan.io", layout="wide", initial_sidebar_state="collapsed")
 
 st.markdown("""
 <style>
@@ -24,6 +25,9 @@ st.markdown("""
   .block-container { padding-left: 0.5rem; padding-right: 0.5rem; }
   iframe { height: 300px !important; }
 }
+/* Hide sidebar toggle and sidebar */
+section[data-testid="stSidebar"] { display: none !important; }
+button[kind="icon"] { display: none !important; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -34,6 +38,43 @@ if "session_id" not in st.session_state:
     st.session_state.param_hash = None
     st.session_state.map_center = [0, 0]
     st.session_state.tour_step = 0
+
+# Display welcome banner and Docs
+st.markdown("## ✈️ Welcome to openflightplan.io")
+col1 = st.container()
+with col1:
+    st.markdown("""
+<div style='text-align: center; margin-top: 1.5rem; margin-bottom: 1.5rem;'>
+  <a href='https://docs.openflightplan.io' target='_blank'><button style='padding: 0.5rem 1rem;'>📄 Docs</button></a>
+  <a href='https://github.com/mostrager/openflightplan' target='_blank'><button style='padding: 0.5rem 1rem;'>🔗 GitHub</button></a>
+  <a href='mailto:support@openflightplan.io'><button style='padding: 0.5rem 1rem;'>💬 Support</button></a>
+</div>
+""", unsafe_allow_html=True)
+
+# Handle browser geolocation messages
+geo_data = st.query_params.get("geo")
+if geo_data:
+    try:
+        coords = json.loads(geo_data[0])
+        if coords and st.session_state.map_center == [0, 0]:
+            st.session_state.map_center = coords
+    except Exception:
+        pass
+
+components.html("""
+<script>
+navigator.geolocation.getCurrentPosition(
+  function (pos) {
+    const coords = [pos.coords.latitude, pos.coords.longitude];
+    const query = new URLSearchParams(window.location.search);
+    query.set('geo', JSON.stringify(coords));
+    window.location.search = query.toString();
+  },
+  function (_) {
+    console.log("Geolocation denied");
+  });
+</script>
+""", height=0)
 
 TOUR_DISMISS = ".tour-dismissed"
 if os.path.exists(TOUR_DISMISS):
@@ -55,34 +96,8 @@ if not os.path.exists("logs/exports.csv"):
     with open("logs/exports.csv", "w") as f:
         f.write("timestamp,drone,mission_type,flight_minutes,flight_km,batteries\n")
 
-if "ux_mode" not in st.session_state:
-    st.session_state.ux_mode = None
-if st.session_state.ux_mode is None:
-    st.markdown("### ✈️ Welcome to openflightplan.io")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("🧭 Quick Rundown"):
-            st.session_state.ux_mode = "new"
-    with col2:
-        if st.button("⚡ I'm Experienced"):
-            st.session_state.ux_mode = "pro"
-    st.stop()
-if st.session_state.ux_mode == "new":
-    st.info("This tool helps you build flight plans with oblique/nadir control.")
-    st.markdown("---")
 
-components.html("""
-<script>
-navigator.geolocation.getCurrentPosition(
-  function (pos) {
-    const coords = [pos.coords.latitude, pos.coords.longitude];
-    window.parent.postMessage({ type: 'USER_LOCATION', coords: coords }, '*');
-  },
-  function (_) {
-    window.parent.postMessage({ type: 'USER_LOCATION_DENIED' }, '*');
-  });
-</script>
-""", height=0)
+
 
 left, right = st.columns([1, 2])
 
@@ -142,7 +157,6 @@ with right:
         st.session_state.flight_path = path
         st.session_state.flight_ready = True
 
-# (continued)
 if st.session_state.flight_ready and st.session_state.flight_path:
     path = st.session_state.flight_path
     df = pd.DataFrame(path, columns=["longitude", "latitude"])
@@ -153,12 +167,6 @@ if st.session_state.flight_ready and st.session_state.flight_path:
     st.info(f"🧭 Distance: {dist_km:.2f} km")
     st.info(f"⏱ Duration: {minutes:.1f} min")
     st.info(f"🔋 Batteries needed: {batteries}")
-
-    # Auto center map to user location on first use
-    if st.session_state.map_center == [0, 0] and "map_data" in st.session_state:
-        user_coords = st.session_state.map_data.get("last_clicked") or st.session_state.map_data.get("center")
-        if user_coords:
-            st.session_state.map_center = [user_coords["lat"], user_coords["lng"]]
 
     preview = folium.Map(location=st.session_state.map_center, zoom_start=16)
     folium.PolyLine([(lat, lon) for lon, lat in path], color="blue").add_to(preview)
