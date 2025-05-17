@@ -1,0 +1,211 @@
+import streamlit as st
+import pandas as pd
+import folium
+from folium.plugins import Draw
+from streamlit_folium import st_folium
+from datetime import datetime
+from drone_specs import DRONE_SPECS
+from flight_calculator import (
+    generate_grid_path,
+    validate_parameters,
+    estimate_flight_metrics,
+    generate_oblique_path
+)
+from dji_export import create_export_zip
+import streamlit.components.v1 as components
+import time, os
+import hashlib
+import uuid
+
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+    st.session_state.flight_path = []
+    st.session_state.flight_ready = False
+    st.session_state.param_hash = None
+    st.session_state.map_center = [0, 0]
+
+st.set_page_config(page_title="openflightplan.io", layout="wide")
+
+# Ensure dirs
+os.makedirs("logs", exist_ok=True)
+os.makedirs("exports", exist_ok=True)
+if not os.path.exists("logs/exports.csv"):
+    with open("logs/exports.csv", "w") as f:
+        f.write("timestamp,drone,mission_type,flight_minutes,flight_km,batteries\\n")
+
+# Init session vars
+for k in ["ux_mode", "flight_path", "map_data", "map_center", "flight_ready", "param_hash"]:
+    if k not in st.session_state:
+        st.session_state[k] = None if k == "ux_mode" else [] if "path" in k else {}
+
+# Intro UX
+if st.session_state.ux_mode is None:
+    st.markdown("### ✈️ Welcome to openflightplan.io")
+    st.markdown("What are you trying to do today?")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🧭 Quick Rundown"):
+            st.session_state.ux_mode = "new"
+    with col2:
+        if st.button("⚡ I'm Experienced"):
+            st.session_state.ux_mode = "pro"
+    st.stop()
+
+if st.session_state.ux_mode == "new":
+    st.info("🧭 This tool helps you generate flight plans for Nadir, Oblique, or Combined missions.")
+    st.markdown("---")
+
+components.html("""
+<script>
+navigator.geolocation.getCurrentPosition(
+    function (position) {
+        const coords = [position.coords.latitude, position.coords.longitude];
+        window.parent.postMessage({ type: 'USER_LOCATION', coords: coords }, '*');
+    },
+    function (error) {
+        window.parent.postMessage({ type: 'USER_LOCATION_DENIED' }, '*');
+    }
+);
+</script>
+""", height=0)
+
+# Sidebar params
+st.sidebar.header("🛠️ flight settings")
+drone_model = st.sidebar.selectbox("drone model", list(DRONE_SPECS.keys()))
+drone_specs = DRONE_SPECS[drone_model]
+
+altitude = st.sidebar.number_input("altitude (m)", min_value=5, value=50)
+speed = st.sidebar.number_input("speed (m/s)", min_value=1, value=5)
+interval = st.sidebar.number_input("capture interval (s)", min_value=1, value=2)
+overlap = st.sidebar.slider("front overlap (%)", 0, 95, 75)
+sidelap = st.sidebar.slider("side overlap (%)", 0, 95, 70)
+fov = st.sidebar.slider("camera field of view (°)", 30, 120, 84)
+direction = st.sidebar.radio("flight direction", ["north_south", "east_west"])
+rotation_deg = st.sidebar.slider("grid rotation (°)", -90, 90, 0)
+
+mission_type = st.selectbox("📷 Select mission type", ["Nadir", "Oblique", "Both"])
+if mission_type in ["Oblique", "Both"]:
+    st.sidebar.markdown("### 🎥 Oblique Parameters")
+    oblique_angle = st.sidebar.slider("camera tilt angle (°)", 5, 85, 45)
+    oblique_layers = st.sidebar.slider("number of oblique passes", 1, 5, 2)
+else:
+    oblique_angle, oblique_layers = 0, 0
+
+# Map draw
+st.subheader("📐 Define area of interest")
+map_draw = folium.Map(location=st.session_state.map_center or [0, 0], zoom_start=3)
+Draw(draw_options={"polygon": True, "rectangle": True, "circle": True, "marker": False}).add_to(map_draw)
+map_output = st_folium(map_draw, width=700, height=500)
+
+# Hash current inputs
+def param_hash(params):
+    return hashlib.md5(str(sorted(params.items())).encode()).hexdigest()
+
+params = {
+    'altitude': altitude, 'speed': speed, 'interval': interval,
+    'overlap': overlap, 'sidelap': sidelap, 'fov': fov,
+    'direction': direction, 'rotation_deg': rotation_deg,
+    'oblique_angle': oblique_angle, 'oblique_layers': oblique_layers,
+    'mission_type': mission_type
+}
+current_hash = param_hash(params)
+
+# Invalidate cached flight path if inputs changed
+if st.session_state.param_hash != current_hash:
+    st.session_state.flight_ready = False
+    st.session_state.param_hash = current_hash
+
+# Flight plan generation
+path = []
+if st.button("🛫 Generate Flight Plan"):
+    path = []
+    errors = validate_parameters(params, drone_specs)
+    if errors:
+        for e in errors:
+            st.error(e)
+        st.stop()
+
+    if map_output and map_output.get("last_active_drawing"):
+        shape = map_output["last_active_drawing"]["geometry"]["coordinates"]
+        if isinstance(shape[0], list):
+           flat_coords = shape[0]  # polygon or rectangle
+        else:
+           flat_coords = [shape]   # circle or single point
+
+        lons = [pt[0] for pt in flat_coords]
+        lats = [pt[1] for pt in flat_coords]
+        center_lon = sum(lons) / len(lons)
+        center_lat = sum(lats) / len(lats)
+        area_width = (max(lons) - min(lons)) * 111000
+        area_height = (max(lats) - min(lats)) * 111000
+        st.session_state.map_center = [center_lat, center_lon]
+    else:
+        st.warning("Please draw a polygon or rectangle on the map.")
+        st.stop()
+        if mission_type in ["Oblique", "Both"]:
+    st.write("Center:", center_lat, center_lon)
+    st.write("Area (meters):", area_width, area_height)
+
+    oblique_path = generate_oblique_path(
+        center_lat=center_lat, center_lon=center_lon,
+        area_width=area_width, area_height=area_height,
+        altitude=altitude, tilt=oblique_angle, layers=oblique_layers
+    )
+    st.write("OB Path Points:", len(oblique_path))
+    path += oblique_path
+
+
+      )
+
+    if mission_type in ["Oblique", "Both"]:
+    st.write("Center:", center_lat, center_lon)
+    st.write("Area (meters):", area_width, area_height)
+
+        path += generate_oblique_path(
+            center_lat=center_lat, center_lon=center_lon,
+            area_width=area_width, area_height=area_height,
+            altitude=altitude, tilt=oblique_angle,
+            layers=oblique_layers
+    st.write("OB Path Points:", len(path))
+    path += oblique_path
+        )
+
+    st.session_state.flight_path = path
+    st.session_state.flight_ready = True
+
+# Result rendering
+if st.session_state.flight_ready and st.session_state.flight_path:
+    path = st.session_state.flight_path
+    df = pd.DataFrame(path, columns=["longitude", "latitude"])
+    st.success(f"✅ Generated {len(path)} waypoints.")
+    st.dataframe(df)
+
+    dist_km, minutes, batteries = estimate_flight_metrics(path, speed, drone_specs)
+    st.info(f"🧭 Estimated distance: {dist_km:.2f} km")
+    st.info(f"⏱ Estimated time: {minutes:.1f} min")
+    st.info(f"🔋 Batteries needed: {batteries}")
+
+    with st.container():
+        preview = folium.Map(location=st.session_state.map_center, zoom_start=16)
+        latlon = [(lat, lon) for lon, lat in path]
+        folium.PolyLine(locations=latlon, color="blue").add_to(preview)
+        st_folium(preview, width=700, height=500)
+
+    if st.button("✅ Confirm & Export"):
+        zip_path = create_export_zip(path, params, df)
+        with open(zip_path, "rb") as f:
+            st.download_button("📦 Download flight plan (.zip)", data=f.read(),
+                               file_name=os.path.basename(zip_path), mime="application/zip")
+
+        with open("logs/exports.csv", "a") as logf:
+            logf.write(f"{datetime.now()},{drone_model},{mission_type},{minutes:.1f},{dist_km:.2f},{batteries}\\n")
+
+        now = time.time()
+        for f in os.listdir("exports"):
+            full = os.path.join("exports", f)
+            if os.path.isfile(full) and now - os.path.getmtime(full) > 86400:
+                os.remove(full)
+File "/root/openflightplan/app.py", line 158
+        )
+        ^
+SyntaxError: unmatched ')'

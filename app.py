@@ -1,100 +1,187 @@
 import streamlit as st
-from drone_specs import DRONE_SPECS
-from flight_calculator import generate_grid_path, validate_parameters
 import pandas as pd
 import folium
 from folium.plugins import Draw
 from streamlit_folium import st_folium
-from io import StringIO
 from datetime import datetime
-from dji_export import create_kml_file
+from drone_specs import DRONE_SPECS
+from flight_calculator import (
+    generate_grid_path,
+    validate_parameters,
+    estimate_flight_metrics,
+    generate_oblique_path
+)
+from dji_export import create_export_zip
+import streamlit.components.v1 as components
+import time, os
+import hashlib, uuid
 
 st.set_page_config(page_title="openflightplan.io", layout="wide")
-st.title("openflightplan.io")
 
-# --- sidebar inputs ---
-st.sidebar.header("🛠️ flight settings")
-drone_model = st.sidebar.selectbox("drone model", list(DRONE_SPECS.keys()))
-drone_specs = DRONE_SPECS[drone_model]
+st.markdown("""
+<style>
+@media only screen and (max-width: 768px) {
+  .block-container { padding-left: 0.5rem; padding-right: 0.5rem; }
+  iframe { height: 300px !important; }
+}
+</style>
+""", unsafe_allow_html=True)
 
-altitude = st.sidebar.number_input("altitude (m)", min_value=1, value=50)
-speed = st.sidebar.number_input("speed (m/s)", min_value=1, value=5)
-interval = st.sidebar.number_input("capture interval (s)", min_value=1, value=2)
-overlap = st.sidebar.slider("front overlap (%)", min_value=0, max_value=95, value=75)
-sidelap = st.sidebar.slider("side overlap (%)", min_value=0, max_value=95, value=70)
-fov = st.sidebar.slider("camera field of view (°)", min_value=30, max_value=120, value=84)
-direction = st.sidebar.radio("flight direction", ["north_south", "east_west"])
-rotation_deg = st.sidebar.slider("grid rotation (°)", min_value=-90, max_value=90, value=0)
+if "session_id" not in st.session_state:
+    st.session_state.session_id = str(uuid.uuid4())
+    st.session_state.flight_path = []
+    st.session_state.flight_ready = False
+    st.session_state.param_hash = None
+    st.session_state.map_center = [0, 0]
+    st.session_state.tour_step = 0
 
-# --- main map section ---
-st.subheader("📐 define area of interest")
-with st.expander("map & area selection", expanded=True):
-    m = folium.Map(location=[37.7749, -122.4194], zoom_start=13)
-    draw = Draw(
-        draw_options={
-            'polyline': False,
-            'circle': False,
-            'marker': False,
-            'circlemarker': False
-        },
-        edit_options={"edit": False}
-    )
-    draw.add_to(m)
-    st_data = st_folium(m, width=700, height=500)
+TOUR_DISMISS = ".tour-dismissed"
+if os.path.exists(TOUR_DISMISS):
+    st.session_state.tour_step = 1
+if st.session_state.tour_step == 0:
+    with st.expander("❓ Quick guide (tap to expand)", expanded=True):
+        st.markdown("1. **Select drone + settings**")
+        st.markdown("2. **Draw AOI** on the map")
+        st.markdown("3. Tap 🛫 **Generate Flight Plan**")
+        st.markdown("4. Tap ✅ **Export** to download plan")
+        if st.button("✅ Got it! Hide this"):
+            with open(TOUR_DISMISS, "w") as f:
+                f.write("1")
+            st.session_state.tour_step = 1
 
-# --- generate plan ---
-st.subheader("🛫 generate flight plan")
-if st.button("generate"):
-    timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M")
-    filename_base = f"{timestamp}_flightplan"
-    center_lat, center_lon = 37.7749, -122.4194
-    area_width = 300  # meters
-    area_height = 200  # meters
+os.makedirs("logs", exist_ok=True)
+os.makedirs("exports", exist_ok=True)
+if not os.path.exists("logs/exports.csv"):
+    with open("logs/exports.csv", "w") as f:
+        f.write("timestamp,drone,mission_type,flight_minutes,flight_km,batteries\n")
 
-    params = {
-        'altitude': altitude,
-        'speed': speed,
-        'interval': interval,
-        'overlap': overlap,
-        'sidelap': sidelap
-    }
+if "ux_mode" not in st.session_state:
+    st.session_state.ux_mode = None
+if st.session_state.ux_mode is None:
+    st.markdown("### ✈️ Welcome to openflightplan.io")
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("🧭 Quick Rundown"):
+            st.session_state.ux_mode = "new"
+    with col2:
+        if st.button("⚡ I'm Experienced"):
+            st.session_state.ux_mode = "pro"
+    st.stop()
+if st.session_state.ux_mode == "new":
+    st.info("This tool helps you build flight plans with oblique/nadir control.")
+    st.markdown("---")
 
-    errors = validate_parameters(params, drone_specs)
-    if errors:
-        for e in errors:
-            st.error(e)
-    else:
-        path = generate_grid_path(
-            area_width=area_width,
-            area_height=area_height,
-            overlap=overlap,
-            sidelap=sidelap,
-            altitude=altitude,
-            speed=speed,
-            interval=interval,
-            fov=fov,
-            center_lat=center_lat,
-            center_lon=center_lon,
-            direction=direction,
-            rotation_deg=rotation_deg
-        )
+components.html("""
+<script>
+navigator.geolocation.getCurrentPosition(
+  function (pos) {
+    const coords = [pos.coords.latitude, pos.coords.longitude];
+    window.parent.postMessage({ type: 'USER_LOCATION', coords: coords }, '*');
+  },
+  function (_) {
+    window.parent.postMessage({ type: 'USER_LOCATION_DENIED' }, '*');
+  });
+</script>
+""", height=0)
 
-        st.success(f"generated {len(path)} waypoints.")
-        df = pd.DataFrame(path, columns=["longitude", "latitude"])
-        st.dataframe(df)
+left, right = st.columns([1, 2])
 
-        path_map = folium.Map(location=[center_lat, center_lon], zoom_start=16)
-        latlon_path = [(lat, lon) for lon, lat in path]
-        folium.PolyLine(locations=latlon_path, color="blue").add_to(path_map)
-        folium.Marker(location=latlon_path[0], popup="start", icon=folium.Icon(color="green")).add_to(path_map)
-        folium.Marker(location=latlon_path[-1], popup="end", icon=folium.Icon(color="red")).add_to(path_map)
-        st_folium(path_map, width=700, height=500)
+with left:
+    with st.expander("🛠️ Flight Settings", expanded=True):
+        drone_model = st.selectbox("drone model", list(DRONE_SPECS.keys()), help="Used for endurance & battery calc")
+        specs = DRONE_SPECS[drone_model]
+        altitude = st.number_input("altitude (m)", 5, 500, 50, help="AGL height")
+        speed = st.number_input("speed (m/s)", 1, 30, 5, help="Cruise speed")
+        interval = st.number_input("interval (s)", 1, 20, 2, help="Capture interval")
+        overlap = st.slider("front overlap (%)", 0, 95, 75, help="Image forward overlap")
+        sidelap = st.slider("side overlap (%)", 0, 95, 70, help="Image lateral overlap")
+        fov = st.slider("camera field of view (°)", 30, 120, 84, help="Camera FOV in degrees")
+        direction = st.radio("flight direction", ["north_south", "east_west"])
+        rotation_deg = st.slider("rotation (°)", -90, 90, 0)
+        mission_type = st.selectbox("📷 Mission type", ["Nadir", "Oblique", "Both"])
+        if mission_type in ["Oblique", "Both"]:
+            oblique_angle = st.slider("oblique tilt (°)", 5, 85, 45)
+            oblique_layers = st.slider("# oblique layers", 1, 5, 2)
+        else:
+            oblique_angle, oblique_layers = 0, 0
 
-        # --- export options ---
-        if path and df is not None:
-            csv_data = df.to_csv(index=False)
-            st.download_button("📥 csv", data=csv_data, file_name=f"{filename_base}.csv", mime="text/csv")
+with right:
+    st.subheader("📐 Define AOI")
+    m = folium.Map(location=st.session_state.map_center or [0, 0], zoom_start=3)
+    Draw(draw_options={"polygon": True, "rectangle": True, "circle": True, "marker": False}).add_to(m)
+    map_output = st_folium(m, height=400)
 
-            kmz_file = create_kml_file(path, params)
-            with open(kmz_file, "rb") as f:
-                st.download_button("📥 kmz", data=f.read(), file_name=kmz_file, mime="application/vnd.google-earth.kmz")
+    if st.button("🛫 Generate Flight Plan"):
+        errors = validate_parameters(dict(
+            altitude=altitude, speed=speed, interval=interval, overlap=overlap,
+            sidelap=sidelap, fov=fov, direction=direction, rotation_deg=rotation_deg,
+            oblique_angle=oblique_angle, oblique_layers=oblique_layers, mission_type=mission_type
+        ), specs)
+        if errors:
+            for e in errors:
+                st.error(e)
+            st.stop()
+        path = []
+        if "last_active_drawing" in map_output:
+            shape = map_output["last_active_drawing"]["geometry"]["coordinates"]
+            coords = shape[0] if isinstance(shape[0], list) else [shape]
+            lons = [c[0] for c in coords]
+            lats = [c[1] for c in coords]
+            clat, clon = sum(lats)/len(lats), sum(lons)/len(lons)
+            w = (max(lons) - min(lons)) * 111000
+            h = (max(lats) - min(lats)) * 111000
+            st.session_state.map_center = [clat, clon]
+        else:
+            st.warning("Please draw a shape.")
+            st.stop()
+        if mission_type in ["Nadir", "Both"]:
+            path += generate_grid_path(w, h, overlap, sidelap, altitude, speed, interval, fov,
+                                       clat, clon, direction, rotation_deg)
+        if mission_type in ["Oblique", "Both"]:
+            path += generate_oblique_path(clat, clon, w, h, altitude, oblique_angle, oblique_layers)
+        st.session_state.flight_path = path
+        st.session_state.flight_ready = True
+
+# (continued)
+if st.session_state.flight_ready and st.session_state.flight_path:
+    path = st.session_state.flight_path
+    df = pd.DataFrame(path, columns=["longitude", "latitude"])
+    st.success(f"✅ Generated {len(path)} waypoints")
+    st.dataframe(df, use_container_width=True)
+
+    dist_km, minutes, batteries = estimate_flight_metrics(path, speed, specs)
+    st.info(f"🧭 Distance: {dist_km:.2f} km")
+    st.info(f"⏱ Duration: {minutes:.1f} min")
+    st.info(f"🔋 Batteries needed: {batteries}")
+
+    # Auto center map to user location on first use
+    if st.session_state.map_center == [0, 0] and "map_data" in st.session_state:
+        user_coords = st.session_state.map_data.get("last_clicked") or st.session_state.map_data.get("center")
+        if user_coords:
+            st.session_state.map_center = [user_coords["lat"], user_coords["lng"]]
+
+    preview = folium.Map(location=st.session_state.map_center, zoom_start=16)
+    folium.PolyLine([(lat, lon) for lon, lat in path], color="blue").add_to(preview)
+    st.subheader("🛰️ Preview Flight Path")
+    st.session_state.map_data = st_folium(preview, height=400)
+
+    export_format = st.radio("Export format", ["CSV", "KMZ", "Both"])
+    if st.button("✅ Confirm & Export"):
+        zip_path = create_export_zip(path, dict(
+            altitude=altitude, speed=speed, interval=interval, overlap=overlap,
+            sidelap=sidelap, fov=fov, direction=direction, rotation_deg=rotation_deg,
+            oblique_angle=oblique_angle, oblique_layers=oblique_layers, mission_type=mission_type
+        ), df, export_format)
+
+        with open(zip_path, "rb") as f:
+            st.download_button("📦 Download flight plan (.zip)", data=f.read(),
+                               file_name=os.path.basename(zip_path), mime="application/zip")
+
+        with open("logs/exports.csv", "a") as logf:
+            logf.write(f"{datetime.now()},{drone_model},{mission_type},{minutes:.1f},{dist_km:.2f},{batteries}\n")
+
+        now = time.time()
+        for f in os.listdir("exports"):
+            full_path = os.path.join("exports", f)
+            if os.path.isfile(full_path) and now - os.path.getmtime(full_path) > 86400:
+                os.remove(full_path)
