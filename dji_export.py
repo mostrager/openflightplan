@@ -1,4 +1,3 @@
-# dji_export.py
 import os
 import zipfile
 import pandas as pd
