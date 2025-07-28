@@ -2,32 +2,30 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
     <url>
          <loc>https://docs.openflightplan.io/</loc>
-         <lastmod>2025-04-27</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2025-07-26</lastmod>
+    </url>
+    <url>
+         <loc>https://docs.openflightplan.io/CONTRIBUTING/</loc>
+         <lastmod>2025-07-26</lastmod>
     </url>
     <url>
          <loc>https://docs.openflightplan.io/developer-guide/</loc>
-         <lastmod>2025-04-27</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2025-07-26</lastmod>
     </url>
     <url>
          <loc>https://docs.openflightplan.io/getting-started/</loc>
-         <lastmod>2025-04-27</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2025-07-26</lastmod>
     </url>
     <url>
          <loc>https://docs.openflightplan.io/license/</loc>
-         <lastmod>2025-04-27</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2025-07-26</lastmod>
     </url>
     <url>
          <loc>https://docs.openflightplan.io/mobile/</loc>
-         <lastmod>2025-04-27</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2025-07-26</lastmod>
     </url>
     <url>
          <loc>https://docs.openflightplan.io/using-the-app/</loc>
-         <lastmod>2025-04-27</lastmod>
-         <changefreq>daily</changefreq>
+         <lastmod>2025-07-26</lastmod>
     </url>
 </urlset>
