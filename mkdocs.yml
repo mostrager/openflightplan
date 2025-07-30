@@ -1,7 +1,5 @@
 site_name: OpenFlightPlan Docs
 site_url: https://docs.openflightplan.io
-repo_url: https://github.com/mostrager/mobile-flight-planner
-repo_name: GitHub
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
@@ -17,9 +15,6 @@ theme:
     - scheme: default
       primary: indigo
       accent: light blue
-    - scheme: slate
-      primary: teal
-      accent: cyan
   font:
     text: "Open Sans"
     code: "Fira Code"
