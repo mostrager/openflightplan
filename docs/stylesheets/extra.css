@@ -1,0 +1,10 @@
+:root {
+  --md-primary-fg-color: #3498db;
+  --md-accent-fg-color: #2980b9;
+}
+body {
+  font-family: 'Segoe UI', sans-serif;
+}
+.md-header, .md-footer {
+  background: linear-gradient(90deg, #3498db, #2980b9);
+}

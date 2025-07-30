@@ -24,20 +24,16 @@ from contact_section import render_contact_form
 load_dotenv()
 
 st.set_page_config(page_title="openflightplan.io", layout="wide")
-st.markdown("""
+
+DARK_CSS = """
 <style>
-html, body {
-    font-size: 150%;
-}
+html, body { font-size: 150%; }
 body {
     font-family: 'Segoe UI', sans-serif;
     background-color: #0e1117;
     color: #f2f4f8;
 }
-.block-container {
-    padding-top: 0.5rem !important;
-    padding-bottom: 1rem !important;
-}
+.block-container { padding-top: 0.5rem !important; padding-bottom: 1rem !important; }
 .stButton>button {
     background-color: #4c8bf5;
     color: white;
@@ -45,19 +41,10 @@ body {
     border: none;
     font-weight: 600;
 }
-.stButton>button:hover {
-    background-color: #1a73e8;
-}
-h1, h2, h3, h4 {
-    color: #f8f9fa;
-}
-.stDataFrame {
-    border-radius: 8px;
-    overflow: hidden;
-}
-.stMarkdown p {
-    color: #d2d6dc;
-}
+.stButton>button:hover { background-color: #1a73e8; }
+h1, h2, h3, h4 { color: #f8f9fa; }
+.stDataFrame { border-radius: 8px; overflow: hidden; }
+.stMarkdown p { color: #d2d6dc; }
 #MainMenu {visibility: hidden;}
 footer {visibility: visible; text-align: center; padding: 1rem 0; color: #8899a6; font-size: 0.9rem;}
 footer a { color: #4c8bf5; text-decoration: none; margin-left: 5px; }
@@ -68,10 +55,41 @@ footer a:hover { text-decoration: underline; }
 }
 section[data-testid="stSidebar"] {display:none;}
 </style>
-<footer>
-Built by Michael · 👾 <a href="https://github.com/openflightplan" target="_blank">GitHub</a>
-</footer>
-""", unsafe_allow_html=True)
+<footer>Built by Michael · 👾 <a href="https://github.com/openflightplan" target="_blank">GitHub</a></footer>
+"""
+
+LIGHT_CSS = """
+<style>
+html, body { font-size: 150%; }
+body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #ffffff;
+    color: #2c3e50;
+}
+.block-container { padding-top: 0.5rem !important; padding-bottom: 1rem !important; }
+.stButton>button {
+    background-color: #3498db;
+    color: white;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+}
+.stButton>button:hover { background-color: #2980b9; }
+h1, h2, h3, h4 { color: #2c3e50; }
+.stDataFrame { border-radius: 8px; overflow: hidden; }
+.stMarkdown p { color: #34495e; }
+#MainMenu {visibility: hidden;}
+footer {visibility: visible; text-align: center; padding: 1rem 0; color: #6c757d; font-size: 0.9rem;}
+footer a { color: #3498db; text-decoration: none; margin-left: 5px; }
+footer a:hover { text-decoration: underline; }
+@media only screen and (max-width: 768px) {
+  .block-container {padding-left:0.5rem;padding-right:0.5rem;}
+  iframe {height:300px !important;}
+}
+section[data-testid="stSidebar"] {display:none;}
+</style>
+<footer>Built by Michael · 👾 <a href="https://github.com/openflightplan" target="_blank">GitHub</a></footer>
+"""
 
 if "session_id" not in st.session_state:
     st.session_state.update({
@@ -85,7 +103,12 @@ if "session_id" not in st.session_state:
         "map_data": {},
         "user_loc_set": False,
         "user_marker": None,
+        "theme": "Dark",
     })
+
+theme_choice = st.radio("Theme", ["Dark", "Light"], horizontal=True, index=0 if st.session_state.theme == "Dark" else 1)
+st.session_state.theme = theme_choice
+st.markdown(DARK_CSS if st.session_state.theme == "Dark" else LIGHT_CSS, unsafe_allow_html=True)
 
 # Inject JS to fetch geolocation and call Streamlit callback
 components.html("""
