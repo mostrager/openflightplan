@@ -56,3 +56,4 @@ urllib3==2.3.0
 watchdog==6.0.0
 xyzservices==2025.1.0
 yarl==1.18.3
+python-dotenv
