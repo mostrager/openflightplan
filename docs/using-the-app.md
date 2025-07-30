@@ -23,6 +23,9 @@ Fine-tune your settings:
 | Interval | Camera trigger interval |
 | FOV | Field of view of camera |
 
+For a deeper explanation of these values and how they impact your mission, see
+[Flight Parameters](flight-parameters.md).
+
 ---
 
 ## 📥 Export Options
