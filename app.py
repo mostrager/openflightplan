@@ -1,7 +1,7 @@
-# app.py
 import os, time, uuid, hashlib, json
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 
 import streamlit as st
 import pandas as pd
@@ -112,7 +112,7 @@ components.html("""
 """, height=0)
 
 # Location input
-loc = st.experimental_get_query_params().get("userLocation")
+loc = st.query_params.get("userLocation")
 if loc:
     try:
         coords = json.loads(loc[0])
@@ -123,6 +123,7 @@ if loc:
 if not st.session_state.map_center:
     st.session_state.map_center = [37.7749, -122.4194]  # fallback default
 
+
 with st.expander("ℹ️ Learn how to configure your mission", expanded=False):
     st.markdown("""
     - **Altitude (AGL):** Controls image resolution and coverage area. Higher altitude = larger area, but less detail.
@@ -132,7 +133,12 @@ with st.expander("ℹ️ Learn how to configure your mission", expanded=False):
     - **Oblique:** Ideal for 3D modeling and vertical features.
     """)
 
-planner_tab, contact_tab, about_tab = st.tabs(["📍 Flight Planner", "📬 Contact Us", "👤 About the Creator"])
+planner_tab, contact_tab, about_tab, code_tab = st.tabs([
+    "📍 Flight Planner",
+    "📬 Contact Us",
+    "👤 About the Creator",
+    "📘 Codebase Overview"
+])
 
 with planner_tab:
     left, right = st.columns([1, 2], gap="large")
@@ -247,6 +253,11 @@ with planner_tab:
 
 with contact_tab:
     render_contact_form()
+
+with code_tab:
+    st.title("📝 Codebase Overview")
+    code_md = Path("docs/codebase_overview.md").read_text(encoding="utf-8")
+    st.markdown(code_md)
 
 with about_tab:
     st.header("👨‍💻 About the Creator")
