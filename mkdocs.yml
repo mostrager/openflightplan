@@ -24,6 +24,8 @@ theme:
     code: "Fira Code"
   logo: assets/logo.png
   favicon: assets/favicon.ico
+extra_css:
+  - stylesheets/extra.css
 extra:
   social:
     - icon: fontawesome/brands/github
